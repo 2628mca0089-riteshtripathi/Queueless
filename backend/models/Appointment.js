@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const appointmentSchema = new mongoose.Schema(
   {
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", index: true },
     customerName: {
       type: String,
       required: [true, "Customer name is required"],
@@ -41,6 +42,7 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    reminderSent: { type: Boolean, default: false },
     status: {
       type: String,
       enum: ["pending", "confirmed", "completed", "cancelled"],

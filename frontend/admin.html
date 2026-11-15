@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard — Glow &amp; Co.</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="favicon-48.png" type="image/png" sizes="48x48" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#3B1B2B" />
     <link rel="stylesheet" href="css/variables.css" />
     <link rel="stylesheet" href="css/admin.css" />
   </head>
@@ -36,6 +41,8 @@
               class="login-input"
             />
           </div>
+          <label class="show-pass"><input type="checkbox" id="showLoginPass" /> Show password</label>
+          <p class="forgot-link"><a href="reset.html" class="login-link">Forgot password?</a></p>
           <button type="submit" class="btn btn-primary login-submit">
             Sign In
           </button>
@@ -44,6 +51,9 @@
           Default (after running <code>npm run seed</code>):
           admin@smartsalon.com / Admin@123
         </div> -->
+        <p class="login-back-link">
+          New shop? <a href="register.html" class="login-link login-link-strong">Register your shop</a>
+        </p>
         <p class="login-back-link">
           <a href="index.html" class="login-link">← Back to website</a>
         </p>
@@ -54,7 +64,7 @@
     <div class="admin-shell" id="adminShell">
       <aside class="admin-sidebar">
         <div class="brand">
-          <span class="mark" class="mark brand-mark">G</span>
+          <span class="mark">G</span>
           Glow Admin
         </div>
         <nav class="admin-nav" id="adminNav">
@@ -62,6 +72,7 @@
           <button data-view="appointments">📅 Appointments</button>
           <button data-view="services">💇 Services</button>
           <button data-view="stylists">🧑‍🎨 Stylists</button>
+          <button data-view="profile">⚙️ Profile</button>
         </nav>
         <div class="spacer"></div>
         <button class="logout-btn" id="logoutBtn">Log out</button>
@@ -72,8 +83,8 @@
         <section class="admin-view active" data-view="overview">
           <div class="admin-header">
             <div>
-              <h2>Overview</h2>
-              <p>A quick look at today's business.</p>
+              <h2 id="dashboardShopName">Overview</h2>
+              <p id="dashboardShopAddress">A quick look at today's business.</p>
             </div>
           </div>
           <div class="stat-grid">
@@ -94,6 +105,27 @@
               <div class="label">Active stylists</div>
             </div>
           </div>
+          <div class="insight-grid">
+            <div class="panel">
+              <div class="panel-head">
+                <h3>Earnings</h3>
+                <select id="statsRange" aria-label="Earnings range">
+                  <option value="7">Last 7 days</option>
+                  <option value="30">Last 30 days</option>
+                </select>
+              </div>
+              <div class="earn-summary">
+                <div><div class="num" id="earnTotal">—</div><div class="label">Completed earnings</div></div>
+                <div><div class="num" id="earnCount">—</div><div class="label">Completed services</div></div>
+                <div><div class="num" id="earnExpected">—</div><div class="label">Upcoming (expected)</div></div>
+              </div>
+              <div class="bar-scroll"><div class="bar-chart" id="earnChart"></div></div>
+            </div>
+            <div class="panel">
+              <h3>Popular services</h3>
+              <div id="popularList"><p class="empty-note">Loading…</p></div>
+            </div>
+          </div>
           <div class="panel">
             <h3>Today's schedule</h3>
             <div id="todayTableWrap"><p class="empty-note">Loading…</p></div>
@@ -111,6 +143,7 @@
           <div class="filter-bar">
             <label for="filterDate">Filter by date</label>
             <input type="date" id="filterDate" />
+            <input type="search" id="searchBox" placeholder="Search name / phone" aria-label="Search appointments" />
             <select id="filterStatus" aria-label="Filter by status">
               <option value="">All statuses</option>
               <option value="pending">Pending</option>
@@ -121,6 +154,7 @@
             <button class="btn btn-ghost btn-sm" id="clearFilters">
               Clear filters
             </button>
+            <button class="btn btn-ghost btn-sm" id="exportCsv">⬇ Export CSV</button>
           </div>
           <div class="panel">
             <div id="apptTableWrap"><p class="empty-note">Loading…</p></div>
@@ -207,9 +241,8 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-ghost btn-sm"
+                    class="btn btn-ghost btn-sm is-hidden"
                     id="serviceCancelEdit"
-                    class="is-hidden"
                   >
                     Cancel edit
                   </button>
@@ -325,9 +358,8 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-ghost btn-sm"
+                    class="btn btn-ghost btn-sm is-hidden"
                     id="stylistCancelEdit"
-                    class="is-hidden"
                   >
                     Cancel edit
                   </button>
@@ -339,6 +371,54 @@
               <div id="stylistTableWrap">
                 <p class="empty-note">Loading…</p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- PROFILE ---------- -->
+        <section class="admin-view" data-view="profile">
+          <div class="admin-header">
+            <div>
+              <h2>Profile</h2>
+              <p>Apni shop ki details edit karein.</p>
+            </div>
+          </div>
+          <div class="manage-grid">
+            <div class="panel">
+              <h3>Shop details</h3>
+              <form id="profileForm">
+                <div class="field"><label for="profShopName">Shop name</label><input type="text" id="profShopName" required /></div>
+                <div class="field"><label for="profOwnerName">Owner name</label><input type="text" id="profOwnerName" required /></div>
+                <div class="field"><label for="profPhone">Phone</label><input type="tel" id="profPhone" pattern="[0-9]{10}" required /></div>
+                <div class="field"><label for="profEmail">Email (login ID)</label><input type="email" id="profEmail" disabled /></div>
+                <div class="field"><label for="profAddress">Shop address</label><textarea id="profAddress" rows="2" required></textarea></div>
+                <div class="field"><label for="profDescription">Description</label><textarea id="profDescription" rows="3"></textarea></div>
+                <div class="form-row">
+                  <div class="field"><label for="profOpen">Shop opens</label><input type="time" id="profOpen" /></div>
+                  <div class="field"><label for="profClose">Shop closes</label><input type="time" id="profClose" /></div>
+                </div>
+                <div class="field">
+                  <label for="holidayDate">Holidays (us din booking band)</label>
+                  <div class="holiday-add"><input type="date" id="holidayDate" /><button type="button" class="btn btn-ghost btn-sm" id="addHoliday">Add</button></div>
+                  <div class="chip-row" id="holidayChips"></div>
+                </div>
+                <div class="form-msg" id="profileMsg" role="alert" aria-live="polite"></div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary btn-sm">Save changes</button>
+                </div>
+              </form>
+            </div>
+            <div class="panel">
+              <h3>Change password</h3>
+              <form id="passwordForm">
+                <div class="field"><label for="curPassword">Current password</label><input type="password" id="curPassword" required /></div>
+                <div class="field"><label for="newPassword">New password (min 8 characters)</label><input type="password" id="newPassword" minlength="8" required /></div>
+                <div class="field"><label for="confirmPassword">Confirm new password</label><input type="password" id="confirmPassword" minlength="8" required /></div>
+                <div class="form-msg" id="passwordMsg" role="alert" aria-live="polite"></div>
+                <div class="form-actions">
+                  <button type="submit" class="btn btn-primary btn-sm" id="passwordBtn">Update password</button>
+                </div>
+              </form>
             </div>
           </div>
         </section>

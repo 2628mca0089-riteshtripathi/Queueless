@@ -8,7 +8,9 @@ const router = express.Router();
 // @desc    Sabhi active stylists list karo (public)
 router.get("/", async (req, res) => {
   try {
-    const filter = req.query.all === "true" ? {} : { isActive: true };
+    const { shopId } = req.query;
+    if (!shopId || !require("mongoose").isValidObjectId(shopId)) return res.status(400).json({ message: "Valid shop select karna zaroori hai" });
+    const filter = { shopId, ...(req.query.all === "true" ? {} : { isActive: true }) };
     const stylists = await Stylist.find(filter).sort({ name: 1 });
     res.json(stylists);
   } catch (error) {
@@ -20,7 +22,7 @@ router.get("/", async (req, res) => {
 // @desc    Naya stylist add karo (admin only)
 router.post("/", protectAdmin, async (req, res) => {
   try {
-    const stylist = await Stylist.create(req.body);
+    const stylist = await Stylist.create({ ...req.body, shopId: req.admin.shopId });
     res.status(201).json(stylist);
   } catch (error) {
     res.status(400).json({ message: "Stylist create nahi ho paaya", error: error.message });
@@ -31,7 +33,11 @@ router.post("/", protectAdmin, async (req, res) => {
 // @desc    Stylist update karo (admin only)
 router.put("/:id", protectAdmin, async (req, res) => {
   try {
-    const stylist = await Stylist.findByIdAndUpdate(req.params.id, req.body, {
+    const update = {};
+    for (const key of ["name", "specialty", "experienceYears", "bio", "workStart", "workEnd", "weeklyOff", "isActive"]) {
+      if (req.body[key] !== undefined) update[key] = req.body[key];
+    }
+    const stylist = await Stylist.findOneAndUpdate({ _id: req.params.id, shopId: req.admin.shopId }, update, {
       new: true,
       runValidators: true,
     });
@@ -46,7 +52,7 @@ router.put("/:id", protectAdmin, async (req, res) => {
 // @desc    Stylist delete karo (admin only)
 router.delete("/:id", protectAdmin, async (req, res) => {
   try {
-    const stylist = await Stylist.findByIdAndDelete(req.params.id);
+    const stylist = await Stylist.findOneAndDelete({ _id: req.params.id, shopId: req.admin.shopId });
     if (!stylist) return res.status(404).json({ message: "Stylist nahi mila" });
     res.json({ message: "Stylist delete ho gaya" });
   } catch (error) {

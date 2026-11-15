@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reset Password — Smart Salon</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="favicon-48.png" type="image/png" sizes="48x48" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#3B1B2B" />
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+    <link rel="stylesheet" href="css/register.css" />
+  </head>
+  <body class="admin-body">
+    <div class="login-screen">
+      <div class="login-card register-card">
+        <div class="mark">G</div>
+        <h2 id="resetTitle">Forgot password?</h2>
+        <p id="resetSub">Apna registered email daalein, hum reset link bhejenge.</p>
+        <div class="login-error" id="resetError"></div>
+        <div class="login-success" id="resetSuccess"></div>
+        <form id="forgotForm">
+          <div class="field"><label for="forgotEmail">Email</label><input id="forgotEmail" type="email" required /></div>
+          <button type="submit" class="btn btn-primary login-submit">Send reset link</button>
+        </form>
+        <form id="resetForm" style="display:none">
+          <div class="field"><label for="resetPass">New password (min 8 characters)</label><input id="resetPass" type="password" minlength="8" required /></div>
+          <div class="field"><label for="resetConfirm">Confirm new password</label><input id="resetConfirm" type="password" minlength="8" required /></div>
+          <button type="submit" class="btn btn-primary login-submit">Set new password</button>
+        </form>
+        <p class="login-back-link"><a href="admin.html" class="login-link">← Back to login</a></p>
+      </div>
+    </div>
+    <script src="js/reset.js"></script>
+  </body>
+</html>

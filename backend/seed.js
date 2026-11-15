@@ -13,6 +13,7 @@ const connectDB = require("./config/db");
 const mongoose = require("mongoose");
 
 const Admin = require("./models/Admin");
+const Shop = require("./models/Shop");
 const Service = require("./models/Service");
 const Stylist = require("./models/Stylist");
 
@@ -20,6 +21,32 @@ const seed = async () => {
   await connectDB();
 
   try {
+    // ---------- Default shop + legacy data migration ----------
+    let defaultShop = await Shop.findOne({ slug: "glow-and-co" });
+    if (!defaultShop) {
+      defaultShop = await Shop.create({
+        name: "Glow & Co.", slug: "glow-and-co", status: "approved", ownerName: "Salon Admin",
+        phone: "0000000000", email: (process.env.ADMIN_EMAIL || "admin@smartsalon.com").toLowerCase(),
+        address: "Update your salon address"
+      });
+    }
+    await Admin.updateMany({ shopId: { $exists: false } }, { $set: { shopId: defaultShop._id } });
+    await Service.updateMany({ shopId: { $exists: false } }, { $set: { shopId: defaultShop._id } });
+    await Stylist.updateMany({ shopId: { $exists: false } }, { $set: { shopId: defaultShop._id } });
+    const Appointment = require("./models/Appointment");
+    await Appointment.updateMany({ shopId: { $exists: false } }, { $set: { shopId: defaultShop._id } });
+
+    await Shop.updateMany({ status: { $exists: false } }, { $set: { status: "approved" } });
+
+    // ---------- Super Admin (optional: SUPERADMIN_EMAIL + SUPERADMIN_PASSWORD .env me do) ----------
+    if (process.env.SUPERADMIN_EMAIL && process.env.SUPERADMIN_PASSWORD) {
+      const sEmail = process.env.SUPERADMIN_EMAIL.toLowerCase().trim();
+      if (!(await Admin.findOne({ email: sEmail }))) {
+        await Admin.create({ email: sEmail, password: await bcrypt.hash(process.env.SUPERADMIN_PASSWORD, 12), name: "Super Admin", role: "superadmin" });
+        console.log(`✅ Super admin banaya gaya -> ${sEmail}`);
+      }
+    }
+
     // ---------- Admin ----------
     const adminEmail = (
       process.env.ADMIN_EMAIL || "admin@smartsalon.com"
@@ -33,11 +60,13 @@ const seed = async () => {
         email: adminEmail,
         password: hashed,
         name: "Salon Admin",
+        shopId: defaultShop._id,
       });
       console.log(
         `✅ Admin banaya gaya -> email: ${adminEmail} | password: ${adminPassword}`,
       );
     } else {
+      if (!existingAdmin.shopId) { existingAdmin.shopId = defaultShop._id; await existingAdmin.save(); }
       console.log("ℹ️  Admin pehle se maujood hai, skip kar diya");
     }
 
@@ -46,6 +75,7 @@ const seed = async () => {
     if (serviceCount === 0) {
       await Service.insertMany([
         {
+          shopId: defaultShop._id,
           name: "Haircut & Styling",
           category: "Hair",
           price: 399,
@@ -108,7 +138,7 @@ const seed = async () => {
           durationMinutes: 60,
           description: "Relaxing aromatherapy body massage",
         },
-      ]);
+      ].map((item) => ({ ...item, shopId: defaultShop._id })));
       console.log("✅ Services seed ho gayi");
     } else {
       console.log("ℹ️  Services pehle se maujood hain, skip kar diya");
@@ -150,7 +180,7 @@ const seed = async () => {
           workEnd: "18:00",
           weeklyOff: [3],
         },
-      ]);
+      ].map((item) => ({ ...item, shopId: defaultShop._id })));
       console.log("✅ Stylists seed ho gaye");
     } else {
       console.log("ℹ️  Stylists pehle se maujood hain, skip kar diya");

@@ -12,6 +12,7 @@ const API_BASE_URL = window.location.origin.startsWith("file")
 let allServices = [];
 let allStylists = [];
 let currentCategory = "All";
+let selectedShopId = localStorage.getItem("salon_selected_shop") || "";
 
 const booking = {
   service: null,
@@ -87,11 +88,61 @@ async function apiPut(path, body) {
 }
 
 // ============================================
+// SHOP SELECTION (multi-shop)
+/// ===========================================
+async function loadShops() {
+  const select = document.getElementById("shopSelect");
+  try {
+    const shops = await apiGet("/shops");
+    if (!shops.length) {
+      select.innerHTML = '<option value="">No shops registered yet</option>';
+      document.getElementById("shopDetails").textContent = "Shop owner admin panel se nayi shop register kar sakta hai.";
+      return;
+    }
+    select.innerHTML = '<option value="">Choose a shop</option>' + shops.map((shop) =>
+      `<option value="${shop._id}">${shop.name} — ${shop.address}</option>`).join("");
+    if (selectedShopId && shops.some((shop) => shop._id === selectedShopId)) {
+      select.value = selectedShopId;
+    } else {
+      selectedShopId = "";
+    }
+    updateShopDetails(shops);
+    if (selectedShopId) { await loadServices(); await loadStylists(); }
+  } catch (error) {
+    select.innerHTML = '<option value="">Shops could not load</option>';
+    console.error(error);
+  }
+}
+function updateShopDetails(shops) {
+  const shop = shops.find((item) => item._id === selectedShopId);
+  document.getElementById("shopDetails").textContent = shop ? `${shop.address} · ${shop.phone}` : "Appointment book karne ke liye shop select karein.";
+}
+document.getElementById("shopSelect").addEventListener("change", async (event) => {
+  selectedShopId = event.target.value;
+  if (selectedShopId) localStorage.setItem("salon_selected_shop", selectedShopId);
+  else localStorage.removeItem("salon_selected_shop");
+  booking.service = booking.stylist = booking.date = booking.time = null;
+  document.getElementById("toStep2").disabled = true;
+  document.getElementById("toStep3").disabled = true;
+  document.getElementById("toStep4").disabled = true;
+  document.getElementById("bookDate").value = "";
+  document.getElementById("slotGrid").innerHTML = '<p class="empty-note">Select a date to see open slots</p>';
+  document.getElementById("toStep4").disabled = true;
+  const shops = await apiGet("/shops");
+  updateShopDetails(shops);
+  allServices = []; allStylists = [];
+  renderServiceGrid(); renderStylistGrid();
+  renderBookingServiceGrid(); renderBookingStylistGrid();
+  if (selectedShopId) { await loadServices(); await loadStylists(); }
+});
+
+// ============================================
 // LOAD SERVICES
 // ============================================
 async function loadServices() {
   try {
-    allServices = await apiGet("/services");
+    if (!selectedShopId) { allServices = []; renderServiceGrid(); renderBookingServiceGrid(); return; }
+    allServices = await apiGet(`/services?shopId=${encodeURIComponent(selectedShopId)}`);
     document.getElementById("statServices").textContent = allServices.length;
     renderServiceGrid();
     renderBookingServiceGrid();
@@ -139,7 +190,8 @@ document.getElementById("categoryTabs").addEventListener("click", (e) => {
 // ============================================
 async function loadStylists() {
   try {
-    allStylists = await apiGet("/stylists");
+    if (!selectedShopId) { allStylists = []; renderStylistGrid(); renderBookingStylistGrid(); return; }
+    allStylists = await apiGet(`/stylists?shopId=${encodeURIComponent(selectedShopId)}`);
     document.getElementById("statStylists").textContent = allStylists.length;
     renderStylistGrid();
     renderBookingStylistGrid();
@@ -228,7 +280,8 @@ function renderBookingStylistGrid() {
 // BOOKING FLOW — STEP 3: DATE & TIME
 // ============================================
 const dateInput = document.getElementById("bookDate");
-const todayStr = new Date().toISOString().slice(0, 10);
+const today = new Date();
+const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 dateInput.min = todayStr;
 
 dateInput.addEventListener("change", async () => {
@@ -246,7 +299,7 @@ async function loadAvailability() {
 
   try {
     const data = await apiGet(
-      `/appointments/availability?stylistId=${booking.stylist._id}&serviceId=${booking.service._id}&date=${booking.date}`
+      `/appointments/availability?stylistId=${booking.stylist._id}&serviceId=${booking.service._id}&date=${booking.date}&shopId=${encodeURIComponent(selectedShopId)}`
     );
 
     if (!data.slots || data.slots.length === 0) {
@@ -313,6 +366,7 @@ function renderBookingSummary() {
 // ============================================
 document.getElementById("bookingForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (!selectedShopId) { showToast("Pehle shop select karein", "error"); document.getElementById("choose-shop").scrollIntoView({ behavior: "smooth" }); return; }
   const submitBtn = e.target.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
   submitBtn.textContent = "Booking…";
@@ -327,6 +381,7 @@ document.getElementById("bookingForm").addEventListener("submit", async (e) => {
       stylist: booking.stylist._id,
       date: booking.date,
       timeSlot: booking.time,
+      shopId: selectedShopId,
     };
 
     const appt = await apiPost("/appointments", payload);
@@ -375,11 +430,12 @@ document.getElementById("bookAnother").addEventListener("click", () => {
 document.getElementById("lookupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const phone = document.getElementById("lookupPhone").value.trim();
+  if (!selectedShopId) { showToast("Pehle shop select karein", "error"); return; }
   const list = document.getElementById("apptList");
   list.innerHTML = `<p class="empty-note">Searching…</p>`;
 
   try {
-    const appts = await apiGet(`/appointments/lookup?phone=${encodeURIComponent(phone)}`);
+    const appts = await apiGet(`/appointments/lookup?phone=${encodeURIComponent(phone)}&shopId=${encodeURIComponent(selectedShopId)}`);
     if (appts.length === 0) {
       list.innerHTML = `<p class="empty-note">Is number se koi appointment nahi mila.</p>`;
       return;
@@ -416,9 +472,9 @@ function renderAppointmentList(appts, phone) {
     btn.addEventListener("click", async () => {
       if (!confirm("Kya aap ye appointment cancel karna chahte hain?")) return;
       try {
-        await apiPut(`/appointments/${btn.dataset.cancel}/cancel`, { phone });
+        await apiPut(`/appointments/${btn.dataset.cancel}/cancel`, { phone, shopId: selectedShopId });
         showToast("Appointment cancel ho gaya", "success");
-        const appts = await apiGet(`/appointments/lookup?phone=${encodeURIComponent(phone)}`);
+        const appts = await apiGet(`/appointments/lookup?phone=${encodeURIComponent(phone)}&shopId=${encodeURIComponent(selectedShopId)}`);
         renderAppointmentList(appts, phone);
       } catch (err) {
         showToast(err.message, "error");
@@ -454,5 +510,4 @@ document.querySelectorAll(".reveal").forEach((el) => revealObserver.observe(el))
 // ============================================
 // INIT
 // ============================================
-loadServices();
-loadStylists();
+loadShops();

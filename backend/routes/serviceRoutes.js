@@ -8,7 +8,9 @@ const router = express.Router();
 // @desc    Sabhi active services list karo (public - customer ke liye)
 router.get("/", async (req, res) => {
   try {
-    const filter = req.query.all === "true" ? {} : { isActive: true };
+    const { shopId } = req.query;
+    if (!shopId || !require("mongoose").isValidObjectId(shopId)) return res.status(400).json({ message: "Valid shop select karna zaroori hai" });
+    const filter = { shopId, ...(req.query.all === "true" ? {} : { isActive: true }) };
     const services = await Service.find(filter).sort({ category: 1, name: 1 });
     res.json(services);
   } catch (error) {
@@ -20,7 +22,7 @@ router.get("/", async (req, res) => {
 // @desc    Naya service add karo (admin only)
 router.post("/", protectAdmin, async (req, res) => {
   try {
-    const service = await Service.create(req.body);
+    const service = await Service.create({ ...req.body, shopId: req.admin.shopId });
     res.status(201).json(service);
   } catch (error) {
     res.status(400).json({ message: "Service create nahi ho paaya", error: error.message });
@@ -31,7 +33,11 @@ router.post("/", protectAdmin, async (req, res) => {
 // @desc    Service update karo (admin only)
 router.put("/:id", protectAdmin, async (req, res) => {
   try {
-    const service = await Service.findByIdAndUpdate(req.params.id, req.body, {
+    const update = {};
+    for (const key of ["name", "category", "description", "price", "durationMinutes", "isActive"]) {
+      if (req.body[key] !== undefined) update[key] = req.body[key];
+    }
+    const service = await Service.findOneAndUpdate({ _id: req.params.id, shopId: req.admin.shopId }, update, {
       new: true,
       runValidators: true,
     });
@@ -46,7 +52,7 @@ router.put("/:id", protectAdmin, async (req, res) => {
 // @desc    Service delete karo (admin only)
 router.delete("/:id", protectAdmin, async (req, res) => {
   try {
-    const service = await Service.findByIdAndDelete(req.params.id);
+    const service = await Service.findOneAndDelete({ _id: req.params.id, shopId: req.admin.shopId });
     if (!service) return res.status(404).json({ message: "Service nahi mila" });
     res.json({ message: "Service delete ho gaya" });
   } catch (error) {

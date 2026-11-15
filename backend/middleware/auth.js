@@ -1,22 +1,34 @@
 const jwt = require("jsonwebtoken");
+const Shop = require("../models/Shop");
 
-// Ye middleware check karta hai ki request ke saath valid admin JWT token hai ya nahi
-const protectAdmin = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+function readToken(req) {
+  const h = req.headers.authorization;
+  if (!h || !h.startsWith("Bearer ")) return null;
+  try { return jwt.verify(h.split(" ")[1], process.env.JWT_SECRET); } catch (_e) { return undefined; }
+}
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Not authorized. Token missing." });
-  }
-
-  const token = authHeader.split(" ")[1];
-
+// Shop owner/admin ke liye: valid token + shop approved honi chahiye
+const protectAdmin = async (req, res, next) => {
+  const decoded = readToken(req);
+  if (decoded === null) return res.status(401).json({ message: "Not authorized. Token missing." });
+  if (!decoded) return res.status(401).json({ message: "Not authorized. Invalid or expired token." });
+  if (!decoded.shopId) return res.status(403).json({ message: "Admin account kisi shop se linked nahi hai. npm run seed chalayein." });
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.admin = decoded; // { id, email }
+    const shop = await Shop.findById(decoded.shopId).select("status isActive");
+    if (!shop || !Shop.isLive(shop)) return res.status(403).json({ message: "Aapki shop approved ya active nahi hai." });
+    req.admin = decoded;
     next();
-  } catch (error) {
-    return res.status(401).json({ message: "Not authorized. Invalid or expired token." });
-  }
+  } catch (_e) { res.status(401).json({ message: "Not authorized." }); }
 };
 
-module.exports = { protectAdmin };
+// Sirf super admin ke liye
+const protectSuper = (req, res, next) => {
+  const decoded = readToken(req);
+  if (decoded === null) return res.status(401).json({ message: "Not authorized. Token missing." });
+  if (!decoded) return res.status(401).json({ message: "Not authorized. Invalid or expired token." });
+  if (decoded.role !== "superadmin") return res.status(403).json({ message: "Sirf super admin ke liye." });
+  req.admin = decoded;
+  next();
+};
+
+module.exports = { protectAdmin, protectSuper };

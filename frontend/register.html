@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register Your Shop — Smart Salon</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="favicon-48.png" type="image/png" sizes="48x48" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#3B1B2B" />
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+    <link rel="stylesheet" href="css/register.css" />
+  </head>
+  <body class="admin-body">
+    <div class="login-screen">
+      <div class="login-card register-card">
+        <div class="mark">G</div>
+        <h2>Register your shop</h2>
+        <p>Apni salon shop register karein aur booking manage karna shuru karein.</p>
+        <div class="login-error" id="registerError"></div>
+        <div class="login-success" id="registerSuccess"></div>
+        <form id="shopRegisterForm">
+          <div class="register-grid">
+            <div class="field"><label for="regShopName">Shop name</label><input id="regShopName" required /></div>
+            <div class="field"><label for="regOwnerName">Owner name</label><input id="regOwnerName" required /></div>
+            <div class="field"><label for="regPhone">Phone</label><input id="regPhone" type="tel" pattern="[0-9]{10}" title="10 digit phone number" required /></div>
+            <div class="field"><label for="regEmail">Email (login ID)</label><input id="regEmail" type="email" required /></div>
+            <div class="field full"><label for="regAddress">Shop address</label><textarea id="regAddress" required></textarea></div>
+            <div class="field full"><label for="regDescription">Description (optional)</label><textarea id="regDescription"></textarea></div>
+            <div class="field full"><label for="regPassword">Password (min 8 characters)</label><input id="regPassword" type="password" minlength="8" required /></div>
+            <div class="field full"><label for="regConfirm">Confirm password</label><input id="regConfirm" type="password" minlength="8" required /></div>
+            <label class="show-pass full"><input type="checkbox" id="showRegPass" /> Show password</label>
+          </div>
+          <button type="submit" class="btn btn-primary login-submit" id="registerBtn">Register Shop</button>
+        </form>
+        <p class="login-back-link">
+          Pehle se account hai? <a href="admin.html" class="login-link login-link-strong">Sign in</a>
+        </p>
+        <p class="login-back-link">
+          <a href="index.html" class="login-link">← Back to website</a>
+        </p>
+      </div>
+    </div>
+    <script src="js/register.js"></script>
+  </body>
+</html>

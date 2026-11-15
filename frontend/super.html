@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Super Admin — Smart Salon</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="favicon-48.png" type="image/png" sizes="48x48" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#3B1B2B" />
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+    <link rel="stylesheet" href="css/register.css" />
+  </head>
+  <body class="admin-body">
+    <div class="login-screen" id="superLogin">
+      <div class="login-card register-card">
+        <div class="mark">G</div>
+        <h2>Super Admin</h2>
+        <p>Shops approve ya block karne ke liye login karein.</p>
+        <div class="login-error" id="superError"></div>
+        <form id="superLoginForm">
+          <div class="field"><label for="superEmail">Email</label><input id="superEmail" type="email" required /></div>
+          <div class="field"><label for="superPass">Password</label><input id="superPass" type="password" required /></div>
+          <button type="submit" class="btn btn-primary login-submit">Sign In</button>
+        </form>
+      </div>
+    </div>
+    <main class="admin-main super-main" id="superMain" style="display:none">
+      <div class="admin-header">
+        <div><h2>Shops</h2><p>Naye registrations approve karein ya kisi shop ko block karein.</p></div>
+        <button class="btn btn-ghost btn-sm" id="superLogout">Log out</button>
+      </div>
+      <div class="panel"><div id="superTable"><p class="empty-note">Loading…</p></div></div>
+    </main>
+    <div class="toast" id="toast"></div>
+    <script src="js/super.js"></script>
+  </body>
+</html>

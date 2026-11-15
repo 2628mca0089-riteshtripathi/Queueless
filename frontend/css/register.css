@@ -1,0 +1,105 @@
+/* Shop registration page */
+body.admin-body .login-screen {
+  align-items: start;
+  padding: 32px 16px;
+}
+.register-card {
+  max-width: 520px;
+  margin: 0 auto;
+}
+.register-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+}
+.register-grid .full {
+  grid-column: 1 / -1;
+}
+.register-card .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.register-card .field label {
+  color: var(--plum);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.register-card input,
+.register-card textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--ivory);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.register-card textarea {
+  min-height: 76px;
+  resize: vertical;
+}
+.register-card input:focus,
+.register-card textarea:focus {
+  outline: none;
+  border-color: var(--gold-deep);
+  box-shadow: 0 0 0 3px rgba(201, 161, 90, 0.16);
+}
+
+/* Show password checkbox fix (isko upar wale input rule ke baad hi rakhna) */
+.register-card .show-pass {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.register-card .show-pass input {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  padding: 0;
+  margin: 0;
+  flex: 0 0 18px;
+  accent-color: var(--plum);
+}
+
+@media (max-width: 520px) {
+  .register-card {
+    padding: 30px 20px;
+  }
+  .register-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.login-success {
+  background: var(--success-bg);
+  color: var(--success);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  margin-bottom: 16px;
+  display: none;
+}
+.forgot-link {
+  text-align: right;
+  margin: -6px 0 12px;
+  font-size: 0.82rem;
+}
+.super-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 34px 24px 60px;
+}
+.login-card .forgot-link,
+.login-card .forgot-link a {
+  margin-bottom: 0;
+}

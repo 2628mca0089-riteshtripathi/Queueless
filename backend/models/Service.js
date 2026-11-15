@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const serviceSchema = new mongoose.Schema(
   {
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop", index: true },
     name: {
       type: String,
       required: [true, "Service name is required"],
