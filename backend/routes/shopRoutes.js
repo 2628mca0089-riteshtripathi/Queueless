@@ -11,18 +11,18 @@ router.get("/", async (_req, res) => {
   try {
     const shops = await Shop.find({ isActive: true, status: { $in: ["approved", null] } }).select("name slug address phone description").sort({ name: 1 });
     res.json(shops);
-  } catch (error) { res.status(500).json({ message: "Shops load nahi ho payi" }); }
+  } catch (error) { res.status(500).json({ message: "Could not load salons" }); }
 });
 
 router.post("/register", async (req, res) => {
   try {
     const { name, ownerName, phone, email, address, description, password } = req.body;
     if (!name || !ownerName || !phone || !email || !address || !password) {
-      return res.status(400).json({ message: "Shop name, owner, phone, email, address aur password required hain" });
+      return res.status(400).json({ message: "Shop name, owner, phone, email, address and password are required" });
     }
-    if (String(password).length < 8) return res.status(400).json({ message: "Password kam se kam 8 characters ka hona chahiye" });
+    if (String(password).length < 8) return res.status(400).json({ message: "Password must contain at least 8 characters" });
     const normalizedEmail = email.toLowerCase().trim();
-    if (await Admin.findOne({ email: normalizedEmail })) return res.status(409).json({ message: "Is email se account pehle se bana hua hai" });
+    if (await Admin.findOne({ email: normalizedEmail })) return res.status(409).json({ message: "An account already exists for this email" });
 
     const baseSlug = slugify(name) || "shop";
     let slug = baseSlug, suffix = 1;
@@ -33,8 +33,8 @@ router.post("/register", async (req, res) => {
     try {
       await Admin.create({ shopId: shop._id, email: normalizedEmail, password: hashed, name: ownerName, role: "owner" });
     } catch (e) { await Shop.findByIdAndDelete(shop._id); throw e; }
-    res.status(201).json({ message: "Shop register ho gayi! Approval ke baad aap login kar payenge. Approve hote hi aapki shop customers ko dikhne lagegi.", shop: { _id: shop._id, name: shop.name } });
-  } catch (error) { res.status(400).json({ message: "Shop register nahi ho payi", error: error.message }); }
+    res.status(201).json({ message: "Shop registered successfully. You can log in after approval.", shop: { _id: shop._id, name: shop.name } });
+  } catch (error) { res.status(400).json({ message: "Could not register the shop", error: error.message }); }
 });
 
 router.get("/mine", protectAdmin, async (req, res) => {

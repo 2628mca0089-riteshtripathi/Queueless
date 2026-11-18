@@ -55,12 +55,12 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res
     .status(500)
-    .json({ message: "Kuch galat ho gaya (Internal Server Error)" });
+    .json({ message: "Something went wrong (Internal Server Error)" });
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   if (mailEnabled) startReminderJob();
-  else console.log("ℹ️  SMTP set nahi hai: emails console me print honge, reminders band hain.");
+  else console.log("ℹ️  SMTP is not configured: emails will print in the console and reminders are disabled.");
   console.log(`🚀 Smart Salon server chal raha hai: http://localhost:${PORT}`);
 });

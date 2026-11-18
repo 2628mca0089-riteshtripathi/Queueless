@@ -9,7 +9,7 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const { shopId } = req.query;
-    if (!shopId || !require("mongoose").isValidObjectId(shopId)) return res.status(400).json({ message: "Valid shop select karna zaroori hai" });
+    if (!shopId || !require("mongoose").isValidObjectId(shopId)) return res.status(400).json({ message: "Please select a valid shop" });
     const filter = { shopId, ...(req.query.all === "true" ? {} : { isActive: true }) };
     const services = await Service.find(filter).sort({ category: 1, name: 1 });
     res.json(services);

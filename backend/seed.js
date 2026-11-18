@@ -1,196 +1,95 @@
-// Ye script database me starting data daal deta hai:
-// - Ek admin account
-// - Kuch services
-// - Kuch stylists
-//
-// Run karne ke liye: npm run seed
-
 require("dotenv").config();
 const dns = require("dns");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 const bcrypt = require("bcryptjs");
-const connectDB = require("./config/db");
 const mongoose = require("mongoose");
+const connectDB = require("./config/db");
 
 const Admin = require("./models/Admin");
 const Shop = require("./models/Shop");
 const Service = require("./models/Service");
 const Stylist = require("./models/Stylist");
+const Appointment = require("./models/Appointment");
+
+const demoShops = [
+  { name: "Velvet & Vibe", slug: "velvet-and-vibe", ownerName: "Aarav Mehta", phone: "9876543210", email: "demo1@queueless.com", address: "12 MG Road, Central Jaipur", description: "Premium hair styling and modern grooming.", openTime: "09:30", closeTime: "20:30" },
+  { name: "Urban Crown Salon", slug: "urban-crown-salon", ownerName: "Sneha Kapoor", phone: "9876543211", email: "demo2@queueless.com", address: "45 Park Street, South Kolkata", description: "Trendy cuts, expert color and bridal looks.", openTime: "10:00", closeTime: "21:00" },
+  { name: "Luxe Glow Studio", slug: "luxe-glow-studio", ownerName: "Riya Malhotra", phone: "9876543212", email: "demo3@queueless.com", address: "18 Brigade Road, Bengaluru", description: "Luxury facials, skincare and makeup services.", openTime: "10:00", closeTime: "20:00" },
+  { name: "The Bridal Loft", slug: "the-bridal-loft", ownerName: "Nisha Arora", phone: "9876543213", email: "demo4@queueless.com", address: "23 Gulmohar Avenue, New Delhi", description: "Bridal makeup, hair styling and occasion looks.", openTime: "08:00", closeTime: "19:00" },
+  { name: "Serenity Spa & Salon", slug: "serenity-spa-salon", ownerName: "Kabir Shah", phone: "9876543214", email: "demo5@queueless.com", address: "7 Lake View Road, Pune", description: "Relaxing spa therapies and complete salon care.", openTime: "09:00", closeTime: "21:00" },
+];
+
+const serviceTemplates = [
+  { name: "Signature Haircut", category: "Hair", price: 499, durationMinutes: 45, description: "Consultation, precision haircut and finishing style." },
+  { name: "Hair Spa Ritual", category: "Hair", price: 899, durationMinutes: 60, description: "Deep cleansing, nourishing mask and relaxing massage." },
+  { name: "Classic Facial", category: "Skin", price: 799, durationMinutes: 50, description: "Cleansing, exfoliation, massage and hydration." },
+  { name: "Premium Manicure", category: "Nails", price: 599, durationMinutes: 40, description: "Nail care, cuticle treatment and polish." },
+  { name: "Party Makeup", category: "Makeup", price: 2499, durationMinutes: 90, description: "Professional makeup for parties and special occasions." },
+];
+
+const stylistTemplates = [
+  { name: "Priya Sharma", specialty: "Senior Hair Stylist", experienceYears: 8, workStart: "10:00", workEnd: "19:00", weeklyOff: [1] },
+  { name: "Rahul Verma", specialty: "Color & Grooming Expert", experienceYears: 6, workStart: "10:00", workEnd: "20:00", weeklyOff: [2] },
+  { name: "Ananya Singh", specialty: "Skin & Makeup Artist", experienceYears: 5, workStart: "11:00", workEnd: "20:00", weeklyOff: [0] },
+];
 
 const seed = async () => {
   await connectDB();
-
   try {
-    // ---------- Default shop + legacy data migration ----------
-    let defaultShop = await Shop.findOne({ slug: "glow-and-co" });
-    if (!defaultShop) {
-      defaultShop = await Shop.create({
-        name: "Glow & Co.", slug: "glow-and-co", status: "approved", ownerName: "Salon Admin",
-        phone: "0000000000", email: (process.env.ADMIN_EMAIL || "admin@smartsalon.com").toLowerCase(),
-        address: "Update your salon address"
-      });
+    const legacyShop = await Shop.findOne({ slug: "glow-and-co" });
+    if (legacyShop) {
+      await Admin.updateMany({ shopId: { $exists: false } }, { $set: { shopId: legacyShop._id } });
+      await Service.updateMany({ shopId: { $exists: false } }, { $set: { shopId: legacyShop._id } });
+      await Stylist.updateMany({ shopId: { $exists: false } }, { $set: { shopId: legacyShop._id } });
+      await Appointment.updateMany({ shopId: { $exists: false } }, { $set: { shopId: legacyShop._id } });
     }
-    await Admin.updateMany({ shopId: { $exists: false } }, { $set: { shopId: defaultShop._id } });
-    await Service.updateMany({ shopId: { $exists: false } }, { $set: { shopId: defaultShop._id } });
-    await Stylist.updateMany({ shopId: { $exists: false } }, { $set: { shopId: defaultShop._id } });
-    const Appointment = require("./models/Appointment");
-    await Appointment.updateMany({ shopId: { $exists: false } }, { $set: { shopId: defaultShop._id } });
 
-    await Shop.updateMany({ status: { $exists: false } }, { $set: { status: "approved" } });
+    for (const demo of demoShops) {
+      let shop = await Shop.findOne({ slug: demo.slug });
+      if (!shop) {
+        shop = await Shop.create({ ...demo, status: "approved", isActive: true });
+        console.log(`Created shop: ${demo.name}`);
+      } else {
+        await Shop.findByIdAndUpdate(shop._id, { ...demo, status: "approved", isActive: true });
+        console.log(`Updated shop: ${demo.name}`);
+      }
 
-    // ---------- Super Admin (optional: SUPERADMIN_EMAIL + SUPERADMIN_PASSWORD .env me do) ----------
-    if (process.env.SUPERADMIN_EMAIL && process.env.SUPERADMIN_PASSWORD) {
-      const sEmail = process.env.SUPERADMIN_EMAIL.toLowerCase().trim();
-      if (!(await Admin.findOne({ email: sEmail }))) {
-        await Admin.create({ email: sEmail, password: await bcrypt.hash(process.env.SUPERADMIN_PASSWORD, 12), name: "Super Admin", role: "superadmin" });
-        console.log(`✅ Super admin banaya gaya -> ${sEmail}`);
+      let admin = await Admin.findOne({ email: demo.email });
+      if (!admin) {
+        await Admin.create({
+          shopId: shop._id,
+          email: demo.email,
+          password: await bcrypt.hash("Demo@123", 12),
+          name: demo.ownerName,
+          role: "owner",
+        });
+      } else if (!admin.shopId) {
+        admin.shopId = shop._id;
+        await admin.save();
+      }
+
+      if (await Service.countDocuments({ shopId: shop._id }) === 0) {
+        await Service.insertMany(serviceTemplates.map((item) => ({ ...item, shopId: shop._id })));
+      }
+      if (await Stylist.countDocuments({ shopId: shop._id }) === 0) {
+        await Stylist.insertMany(stylistTemplates.map((item) => ({ ...item, shopId: shop._id })));
       }
     }
 
-    // ---------- Admin ----------
-    const adminEmail = (
-      process.env.ADMIN_EMAIL || "admin@smartsalon.com"
-    ).toLowerCase();
-    const adminPassword = process.env.ADMIN_PASSWORD || "Admin@123";
-
-    const existingAdmin = await Admin.findOne({ email: adminEmail });
-    if (!existingAdmin) {
-      const hashed = await bcrypt.hash(adminPassword, 10);
-      await Admin.create({
-        email: adminEmail,
-        password: hashed,
-        name: "Salon Admin",
-        shopId: defaultShop._id,
-      });
-      console.log(
-        `✅ Admin banaya gaya -> email: ${adminEmail} | password: ${adminPassword}`,
-      );
-    } else {
-      if (!existingAdmin.shopId) { existingAdmin.shopId = defaultShop._id; await existingAdmin.save(); }
-      console.log("ℹ️  Admin pehle se maujood hai, skip kar diya");
+    if (process.env.SUPERADMIN_EMAIL && process.env.SUPERADMIN_PASSWORD) {
+      const email = process.env.SUPERADMIN_EMAIL.toLowerCase().trim();
+      if (!(await Admin.findOne({ email }))) {
+        await Admin.create({ email, password: await bcrypt.hash(process.env.SUPERADMIN_PASSWORD, 12), name: "Super Admin", role: "superadmin" });
+      }
     }
 
-    // ---------- Services ----------
-    const serviceCount = await Service.countDocuments();
-    if (serviceCount === 0) {
-      await Service.insertMany([
-        {
-          shopId: defaultShop._id,
-          name: "Haircut & Styling",
-          category: "Hair",
-          price: 399,
-          durationMinutes: 45,
-          description: "Wash, cut aur blow-dry styling",
-        },
-        {
-          name: "Hair Spa",
-          category: "Hair",
-          price: 899,
-          durationMinutes: 60,
-          description: "Deep conditioning aur nourishing hair spa",
-        },
-        {
-          name: "Global Hair Color",
-          category: "Hair",
-          price: 1999,
-          durationMinutes: 90,
-          description: "Full hair coloring, ammonia-free",
-        },
-        {
-          name: "Classic Facial",
-          category: "Skin",
-          price: 699,
-          durationMinutes: 45,
-          description: "Cleansing, exfoliation aur glow facial",
-        },
-        {
-          name: "Gold Facial",
-          category: "Skin",
-          price: 1499,
-          durationMinutes: 60,
-          description: "Premium 24k gold radiance facial",
-        },
-        {
-          name: "Manicure",
-          category: "Nails",
-          price: 349,
-          durationMinutes: 30,
-          description: "Nail shaping, cuticle care aur polish",
-        },
-        {
-          name: "Pedicure",
-          category: "Nails",
-          price: 449,
-          durationMinutes: 40,
-          description: "Foot spa, scrub aur polish",
-        },
-        {
-          name: "Bridal Makeup",
-          category: "Makeup",
-          price: 4999,
-          durationMinutes: 120,
-          description: "HD bridal makeup with trial",
-        },
-        {
-          name: "Full Body Massage",
-          category: "Spa",
-          price: 1299,
-          durationMinutes: 60,
-          description: "Relaxing aromatherapy body massage",
-        },
-      ].map((item) => ({ ...item, shopId: defaultShop._id })));
-      console.log("✅ Services seed ho gayi");
-    } else {
-      console.log("ℹ️  Services pehle se maujood hain, skip kar diya");
-    }
-
-    // ---------- Stylists ----------
-    const stylistCount = await Stylist.countDocuments();
-    if (stylistCount === 0) {
-      await Stylist.insertMany([
-        {
-          name: "Priya Sharma",
-          specialty: "Senior Hair Stylist",
-          experienceYears: 8,
-          workStart: "10:00",
-          workEnd: "19:00",
-          weeklyOff: [1],
-        },
-        {
-          name: "Rahul Verma",
-          specialty: "Color Expert",
-          experienceYears: 6,
-          workStart: "10:00",
-          workEnd: "19:00",
-          weeklyOff: [2],
-        },
-        {
-          name: "Ananya Singh",
-          specialty: "Skin & Facial Specialist",
-          experienceYears: 5,
-          workStart: "11:00",
-          workEnd: "20:00",
-          weeklyOff: [1],
-        },
-        {
-          name: "Karan Mehta",
-          specialty: "Makeup Artist",
-          experienceYears: 7,
-          workStart: "10:00",
-          workEnd: "18:00",
-          weeklyOff: [3],
-        },
-      ].map((item) => ({ ...item, shopId: defaultShop._id })));
-      console.log("✅ Stylists seed ho gaye");
-    } else {
-      console.log("ℹ️  Stylists pehle se maujood hain, skip kar diya");
-    }
-
-    console.log("🎉 Seeding complete!");
+    console.log("Seeding complete: 5 demo shops are ready.");
+    console.log("Demo shop login: demo1@queueless.com ... demo5@queueless.com");
+    console.log("Demo password: Demo@123");
   } catch (error) {
-    console.error("❌ Seeding error:", error.message);
+    console.error("Seeding error:", error.message);
   } finally {
-    mongoose.connection.close();
+    await mongoose.connection.close();
   }
 };
 
