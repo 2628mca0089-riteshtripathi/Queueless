@@ -202,3 +202,6 @@ Server backend aur frontend dono ek saath serve karta hai, isliye alag se kuch o
 5. Har shop owner ko sirf apni shop ka dashboard data/API response milega.
 
 **Important:** Existing installation ko upgrade karte waqt `backend/.env` ko project ZIP/Git me share na karein. `.env.example` ko copy karke apna local `.env` banayein. Agar pehle se shared `.env` me real database password/JWT secret tha, use rotate karein.
+
+SUPERADMIN_EMAIL=aapka-email@example.com
+SUPERADMIN_PASSWORD=AapkaStrongPassword@123
