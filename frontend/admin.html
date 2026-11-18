@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard — Glow &amp; Co.</title>
+    <title>Admin Dashboard — Queueless</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="favicon-48.png" type="image/png" sizes="48x48" />
     <link rel="shortcut icon" href="favicon.ico" />
@@ -16,7 +16,7 @@
     <!-- ===================== LOGIN ===================== -->
     <div class="login-screen" id="loginScreen">
       <div class="login-card">
-        <div class="mark">G</div>
+        <img class="mark" src="queueless-logo.svg" alt="Queueless logo" />
         <h2>Admin Login</h2>
         <p>Sign in to manage appointments, services &amp; stylists.</p>
         <div class="login-error" id="loginError"></div>
@@ -64,8 +64,8 @@
     <div class="admin-shell" id="adminShell">
       <aside class="admin-sidebar">
         <div class="brand">
-          <span class="mark">G</span>
-          Glow Admin
+          <img class="mark" src="queueless-logo.svg" alt="" />
+          Queueless Admin
         </div>
         <nav class="admin-nav" id="adminNav">
           <button data-view="overview" class="active">📊 Overview</button>
@@ -380,7 +380,7 @@
           <div class="admin-header">
             <div>
               <h2>Profile</h2>
-              <p>Apni shop ki details edit karein.</p>
+              <p>Edit your salon's details and availability.</p>
             </div>
           </div>
           <div class="manage-grid">
@@ -398,7 +398,7 @@
                   <div class="field"><label for="profClose">Shop closes</label><input type="time" id="profClose" /></div>
                 </div>
                 <div class="field">
-                  <label for="holidayDate">Holidays (us din booking band)</label>
+                  <label for="holidayDate">Holidays (booking closed)</label>
                   <div class="holiday-add"><input type="date" id="holidayDate" /><button type="button" class="btn btn-ghost btn-sm" id="addHoliday">Add</button></div>
                   <div class="chip-row" id="holidayChips"></div>
                 </div>

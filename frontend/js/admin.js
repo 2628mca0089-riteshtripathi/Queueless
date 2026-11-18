@@ -73,7 +73,7 @@ async function apiCall(path, options = {}) {
 
   if (res.status === 401) {
     logout();
-    throw new Error("Session expired. Kripya dobara login karein.");
+    throw new Error("Session expired. Please sign in again.");
   }
 
   const data = await res.json();
@@ -179,7 +179,7 @@ async function loadOverview() {
 
     const wrap = document.getElementById("todayTableWrap");
     if (todayAppts.length === 0) {
-      wrap.innerHTML = `<p class="empty-note">Aaj koi appointment schedule nahi hai.</p>`;
+      wrap.innerHTML = `<p class="empty-note">No appointments are scheduled for today.</p>`;
       return;
     }
     wrap.innerHTML = buildApptTable(todayAppts.sort((a, b) => a.timeSlot.localeCompare(b.timeSlot)));
@@ -208,13 +208,13 @@ async function loadAppointments() {
     const appts = await apiCall(`/appointments?${params.toString()}`);
     lastAppts = appts;
     if (appts.length === 0) {
-      wrap.innerHTML = `<p class="empty-note">Koi appointment nahi mila.</p>`;
+      wrap.innerHTML = `<p class="empty-note">No appointments found.</p>`;
       return;
     }
     wrap.innerHTML = buildApptTable(appts);
     attachApptTableEvents(wrap);
   } catch (err) {
-    wrap.innerHTML = `<p class="empty-note">Load nahi ho paya.</p>`;
+    wrap.innerHTML = `<p class="empty-note">Could not load data.</p>`;
     showToast(err.message, "error");
   }
 }
@@ -260,7 +260,7 @@ function attachApptTableEvents(wrap) {
           body: JSON.stringify({ status: sel.value }),
         });
         sel.className = `status-select status-${sel.value}`;
-        showToast("Status update ho gaya", "success");
+        showToast("Status updated", "success");
       } catch (err) {
         sel.className = prevClass;
         showToast(err.message, "error");
@@ -270,10 +270,10 @@ function attachApptTableEvents(wrap) {
 
   wrap.querySelectorAll("[data-delete]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm("Ye appointment permanently delete karein?")) return;
+      if (!confirm("Permanently delete this appointment?")) return;
       try {
         await apiCall(`/appointments/${btn.dataset.delete}`, { method: "DELETE" });
-        showToast("Appointment delete ho gaya", "success");
+        showToast("Appointment deleted", "success");
         btn.closest("tr").remove();
       } catch (err) {
         showToast(err.message, "error");
@@ -300,7 +300,7 @@ async function loadServicesAdmin() {
   try {
     allServices = await apiCall("/services?all=true");
     if (allServices.length === 0) {
-      wrap.innerHTML = `<p class="empty-note">Abhi koi service nahi hai. Form se add karein.</p>`;
+      wrap.innerHTML = `<p class="empty-note">No services yet. Add one using the form.</p>`;
       return;
     }
     wrap.innerHTML = `
@@ -333,7 +333,7 @@ async function loadServicesAdmin() {
       btn.addEventListener("click", () => deleteService(btn.dataset.delete))
     );
   } catch (err) {
-    wrap.innerHTML = `<p class="empty-note">Load nahi ho paya.</p>`;
+    wrap.innerHTML = `<p class="empty-note">Could not load data.</p>`;
     showToast(err.message, "error");
   }
 }
@@ -355,10 +355,10 @@ function editService(id) {
 }
 
 async function deleteService(id) {
-  if (!confirm("Ye service delete karein?")) return;
+  if (!confirm("Delete this service?")) return;
   try {
     await apiCall(`/services/${id}`, { method: "DELETE" });
-    showToast("Service delete ho gayi", "success");
+    showToast("Service deleted", "success");
     loadServicesAdmin();
   } catch (err) {
     showToast(err.message, "error");
@@ -387,10 +387,10 @@ document.getElementById("serviceForm").addEventListener("submit", async (e) => {
   try {
     if (editingServiceId) {
       await apiCall(`/services/${editingServiceId}`, { method: "PUT", body: JSON.stringify(payload) });
-      showToast("Service update ho gayi", "success");
+      showToast("Service updated", "success");
     } else {
       await apiCall("/services", { method: "POST", body: JSON.stringify(payload) });
-      showToast("Service add ho gayi", "success");
+      showToast("Service added", "success");
     }
     resetServiceForm();
     loadServicesAdmin();
@@ -408,7 +408,7 @@ async function loadStylistsAdmin() {
   try {
     allStylists = await apiCall("/stylists?all=true");
     if (allStylists.length === 0) {
-      wrap.innerHTML = `<p class="empty-note">Abhi koi stylist nahi hai. Form se add karein.</p>`;
+      wrap.innerHTML = `<p class="empty-note">No stylists yet. Add one using the form.</p>`;
       return;
     }
     wrap.innerHTML = `
@@ -441,7 +441,7 @@ async function loadStylistsAdmin() {
       btn.addEventListener("click", () => deleteStylist(btn.dataset.delete))
     );
   } catch (err) {
-    wrap.innerHTML = `<p class="empty-note">Load nahi ho paya.</p>`;
+    wrap.innerHTML = `<p class="empty-note">Could not load data.</p>`;
     showToast(err.message, "error");
   }
 }
@@ -483,10 +483,10 @@ function editStylist(id) {
 }
 
 async function deleteStylist(id) {
-  if (!confirm("Ye stylist delete karein?")) return;
+  if (!confirm("Delete this stylist?")) return;
   try {
     await apiCall(`/stylists/${id}`, { method: "DELETE" });
-    showToast("Stylist delete ho gaya", "success");
+    showToast("Stylist deleted", "success");
     loadStylistsAdmin();
   } catch (err) {
     showToast(err.message, "error");
@@ -519,10 +519,10 @@ document.getElementById("stylistForm").addEventListener("submit", async (e) => {
   try {
     if (editingStylistId) {
       await apiCall(`/stylists/${editingStylistId}`, { method: "PUT", body: JSON.stringify(payload) });
-      showToast("Stylist update ho gaya", "success");
+      showToast("Stylist updated", "success");
     } else {
       await apiCall("/stylists", { method: "POST", body: JSON.stringify(payload) });
-      showToast("Stylist add ho gaya", "success");
+      showToast("Stylist added", "success");
     }
     resetStylistForm();
     loadStylistsAdmin();
@@ -575,8 +575,8 @@ document.getElementById("profileForm").addEventListener("submit", async (e) => {
   try {
     const shop = await apiCall("/shops/mine", { method: "PUT", body: JSON.stringify(payload) });
     applyShopToHeader(shop);
-    showToast("Profile update ho gaya", "success");
-    setMsg("profileMsg", "Profile update ho gaya ✓", "success");
+    showToast("Profile updated", "success");
+    setMsg("profileMsg", "Profile updated successfully", "success");
   } catch (err) {
     showToast(err.message, "error");
     setMsg("profileMsg", err.message, "error");
@@ -588,8 +588,8 @@ document.getElementById("passwordForm").addEventListener("submit", async (e) => 
   setMsg("passwordMsg", "");
   const newPassword = document.getElementById("newPassword").value;
   if (newPassword !== document.getElementById("confirmPassword").value) {
-    showToast("New password aur confirm password match nahi karte", "error");
-    setMsg("passwordMsg", "New password aur confirm password match nahi karte", "error");
+    showToast("New password and confirm password do not match", "error");
+    setMsg("passwordMsg", "New password and confirm password do not match", "error");
     return;
   }
   try {
@@ -601,8 +601,8 @@ document.getElementById("passwordForm").addEventListener("submit", async (e) => 
       }),
     });
     document.getElementById("passwordForm").reset();
-    showToast("Password change ho gaya", "success");
-    setMsg("passwordMsg", "Password change ho gaya ✓", "success");
+    showToast("Password changed", "success");
+    setMsg("passwordMsg", "Password changed successfully", "success");
   } catch (err) {
     showToast(err.message, "error");
     setMsg("passwordMsg", err.message, "error");
@@ -639,7 +639,7 @@ async function loadStats() {
 
     const list = document.getElementById("popularList");
     if (!st.topServices.length) {
-      list.innerHTML = `<p class="empty-note">Is period me abhi koi booking nahi hai.</p>`;
+      list.innerHTML = `<p class="empty-note">No bookings in this period yet.</p>`;
       return;
     }
     const top = st.topServices[0].count;
@@ -664,11 +664,11 @@ function renderHolidays() {
   const wrap = document.getElementById("holidayChips");
   wrap.innerHTML = holidays.length
     ? holidays.map((d) => `<span class="holiday-chip">${esc(formatDatePretty(d))}<button type="button" data-rm="${esc(d)}" aria-label="Remove holiday">×</button></span>`).join("")
-    : '<span class="muted-note">Koi holiday set nahi hai</span>';
+    : '<span class="muted-note">No holidays set</span>';
 }
 document.getElementById("addHoliday").addEventListener("click", () => {
   const input = document.getElementById("holidayDate");
-  if (!input.value) return showToast("Pehle date chunein", "error");
+  if (!input.value) return showToast("Please select a date", "error");
   if (!holidays.includes(input.value)) holidays = [...holidays, input.value].sort();
   input.value = "";
   renderHolidays();
@@ -688,11 +688,11 @@ document.getElementById("searchBox").addEventListener("input", () => {
 
 function csvCell(v) {
   let s = String(v ?? "");
-  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // Excel formula injection se bachav
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   return `"${s.replace(/"/g, '""')}"`;
 }
 document.getElementById("exportCsv").addEventListener("click", () => {
-  if (!lastAppts.length) return showToast("Export karne ke liye koi appointment nahi hai", "error");
+  if (!lastAppts.length) return showToast("No appointments to export", "error");
   const rows = [["Date", "Time", "Customer", "Phone", "Email", "Service", "Price", "Stylist", "Status", "Notes"]];
   lastAppts.forEach((a) => rows.push([a.date, a.timeSlot, a.customerName, a.customerPhone, a.customerEmail || "", a.service ? a.service.name : "", a.service ? a.service.price : "", a.stylist ? a.stylist.name : "", a.status, a.notes || ""]));
   const csv = "\uFEFF" + rows.map((r) => r.map(csvCell).join(",")).join("\r\n");

@@ -15,7 +15,7 @@ async function api(path, options = {}) {
     ...options,
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
-  if (res.status === 401) { logout(); throw new Error("Session expired. Dobara login karein."); }
+  if (res.status === 401) { logout(); throw new Error("Session expired. Please sign in again."); }
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Something went wrong");
   return data;
@@ -29,7 +29,7 @@ async function loadShops() {
   const wrap = document.getElementById("superTable");
   try {
     const shops = await api("/super/shops");
-    if (!shops.length) { wrap.innerHTML = '<p class="empty-note">Abhi koi shop nahi hai.</p>'; return; }
+    if (!shops.length) { wrap.innerHTML = '<p class="empty-note">No salons are registered yet.</p>'; return; }
     wrap.innerHTML = `<table class="data-table"><thead><tr><th>Shop</th><th>Owner</th><th>Contact</th><th>Registered</th><th>Status</th></tr></thead><tbody>${shops.map((s) => `
       <tr>
         <td>${esc(s.name)}<br /><span class="muted">${esc(s.address)}</span></td>
@@ -43,11 +43,11 @@ async function loadShops() {
     wrap.querySelectorAll(".status-select").forEach((sel) => sel.addEventListener("change", async () => {
       try {
         await api(`/super/shops/${sel.dataset.id}/status`, { method: "PUT", body: JSON.stringify({ status: sel.value }) });
-        toast("Status update ho gaya", "success");
+        toast("Status updated", "success");
         loadShops();
       } catch (err) { toast(err.message, "error"); loadShops(); }
     }));
-  } catch (err) { wrap.innerHTML = '<p class="empty-note">Load nahi ho paya.</p>'; toast(err.message, "error"); }
+  } catch (err) { wrap.innerHTML = '<p class="empty-note">Could not load data.</p>'; toast(err.message, "error"); }
 }
 function showMain() {
   document.getElementById("superLogin").style.display = "none";
@@ -65,7 +65,7 @@ document.getElementById("superLoginForm").addEventListener("submit", async (e) =
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Login failed");
-    if (!data.admin || data.admin.role !== "superadmin") throw new Error("Ye account super admin nahi hai");
+    if (!data.admin || data.admin.role !== "superadmin") throw new Error("This account is not a super admin");
     token = data.token; localStorage.setItem(KEY, token);
     showMain();
   } catch (err) { box.textContent = err.message; box.style.display = "block"; }

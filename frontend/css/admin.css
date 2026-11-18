@@ -26,6 +26,7 @@ body.admin-body {
   width: 44px;
   height: 44px;
   border-radius: 50%;
+  object-fit: cover;
   background: conic-gradient(
     from 200deg,
     var(--gold),

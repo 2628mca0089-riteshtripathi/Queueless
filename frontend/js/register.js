@@ -19,7 +19,7 @@ document.getElementById("shopRegisterForm").addEventListener("submit", async (ev
   };
 
   if (payload.password !== document.getElementById("regConfirm").value) {
-    errorBox.textContent = "Password aur confirm password match nahi karte";
+    errorBox.textContent = "Password and confirm password do not match";
     errorBox.style.display = "block";
     return;
   }

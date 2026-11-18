@@ -24,7 +24,7 @@ if (token) {
   document.getElementById("forgotForm").style.display = "none";
   document.getElementById("resetForm").style.display = "block";
   document.getElementById("resetTitle").textContent = "Set new password";
-  document.getElementById("resetSub").textContent = "Apna naya password daalein.";
+  document.getElementById("resetSub").textContent = "Enter your new password.";
 }
 
 document.getElementById("forgotForm").addEventListener("submit", async (e) => {
@@ -38,7 +38,7 @@ document.getElementById("forgotForm").addEventListener("submit", async (e) => {
 document.getElementById("resetForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const newPassword = document.getElementById("resetPass").value;
-  if (newPassword !== document.getElementById("resetConfirm").value) return show(errBox, "Password match nahi karte");
+  if (newPassword !== document.getElementById("resetConfirm").value) return show(errBox, "Passwords do not match");
   try {
     const data = await post("/auth/reset", { token, newPassword });
     document.getElementById("resetForm").style.display = "none";

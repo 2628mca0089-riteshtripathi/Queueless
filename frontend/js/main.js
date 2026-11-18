@@ -96,7 +96,7 @@ async function loadShops() {
     const shops = await apiGet("/shops");
     if (!shops.length) {
       select.innerHTML = '<option value="">No shops registered yet</option>';
-      document.getElementById("shopDetails").textContent = "Shop owner admin panel se nayi shop register kar sakta hai.";
+      document.getElementById("shopDetails").textContent = "No shops are currently available.";
       return;
     }
     select.innerHTML = '<option value="">Choose a shop</option>' + shops.map((shop) =>
@@ -115,7 +115,7 @@ async function loadShops() {
 }
 function updateShopDetails(shops) {
   const shop = shops.find((item) => item._id === selectedShopId);
-  document.getElementById("shopDetails").textContent = shop ? `${shop.address} · ${shop.phone}` : "Appointment book karne ke liye shop select karein.";
+  document.getElementById("shopDetails").textContent = shop ? `${shop.address} · ${shop.phone}` : "Select a salon to book an appointment.";
 }
 document.getElementById("shopSelect").addEventListener("change", async (event) => {
   selectedShopId = event.target.value;
@@ -147,7 +147,7 @@ async function loadServices() {
     renderServiceGrid();
     renderBookingServiceGrid();
   } catch (err) {
-    document.getElementById("serviceGrid").innerHTML = `<p class="empty-note">Services load nahi ho payi. Kya backend server chal raha hai?</p>`;
+    document.getElementById("serviceGrid").innerHTML = `<p class="empty-note">Services could not load. Please check that the server is running.</p>`;
     console.error(err);
   }
 }
@@ -157,7 +157,7 @@ function renderServiceGrid() {
   const filtered = currentCategory === "All" ? allServices : allServices.filter((s) => s.category === currentCategory);
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<p class="empty-note">Is category mein abhi koi service nahi hai.</p>`;
+    grid.innerHTML = `<p class="empty-note">No services are available in this category.</p>`;
     return;
   }
 
@@ -196,7 +196,7 @@ async function loadStylists() {
     renderStylistGrid();
     renderBookingStylistGrid();
   } catch (err) {
-    document.getElementById("stylistGrid").innerHTML = `<p class="empty-note">Stylists load nahi ho paye. Kya backend server chal raha hai?</p>`;
+    document.getElementById("stylistGrid").innerHTML = `<p class="empty-note">Stylists could not load. Please check that the server is running.</p>`;
     console.error(err);
   }
 }
@@ -204,7 +204,7 @@ async function loadStylists() {
 function renderStylistGrid() {
   const grid = document.getElementById("stylistGrid");
   if (allStylists.length === 0) {
-    grid.innerHTML = `<p class="empty-note">Abhi koi stylist listed nahi hai.</p>`;
+    grid.innerHTML = `<p class="empty-note">No stylists are currently listed.</p>`;
     return;
   }
   grid.innerHTML = allStylists
@@ -303,7 +303,7 @@ async function loadAvailability() {
     );
 
     if (!data.slots || data.slots.length === 0) {
-      slotGrid.innerHTML = `<p class="empty-note" style="grid-column:1/-1;padding:20px 0;">${data.message || "Is din koi slot available nahi hai."}</p>`;
+      slotGrid.innerHTML = `<p class="empty-note" style="grid-column:1/-1;padding:20px 0;">${data.message || "No slots are available on this date."}</p>`;
       return;
     }
 
@@ -322,7 +322,7 @@ async function loadAvailability() {
       });
     });
   } catch (err) {
-    slotGrid.innerHTML = `<p class="empty-note" style="grid-column:1/-1;padding:20px 0;">Availability load nahi ho payi.</p>`;
+    slotGrid.innerHTML = `<p class="empty-note" style="grid-column:1/-1;padding:20px 0;">Availability could not load.</p>`;
     console.error(err);
   }
 }
@@ -366,7 +366,7 @@ function renderBookingSummary() {
 // ============================================
 document.getElementById("bookingForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!selectedShopId) { showToast("Pehle shop select karein", "error"); document.getElementById("choose-shop").scrollIntoView({ behavior: "smooth" }); return; }
+  if (!selectedShopId) { showToast("Please select a salon first", "error"); document.getElementById("choose-shop").scrollIntoView({ behavior: "smooth" }); return; }
   const submitBtn = e.target.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
   submitBtn.textContent = "Booking…";
@@ -398,7 +398,7 @@ document.getElementById("bookingForm").addEventListener("submit", async (e) => {
     showToast("Appointment booked! 🎉", "success");
   } catch (err) {
     showToast(err.message, "error");
-    // Agar slot clash ho gaya to fresh availability dobara load karo
+    // Reload availability if a time slot clash occurs
     if (err.message.toLowerCase().includes("slot")) {
       loadAvailability();
     }
@@ -430,19 +430,19 @@ document.getElementById("bookAnother").addEventListener("click", () => {
 document.getElementById("lookupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const phone = document.getElementById("lookupPhone").value.trim();
-  if (!selectedShopId) { showToast("Pehle shop select karein", "error"); return; }
+  if (!selectedShopId) { showToast("Please select a salon first", "error"); return; }
   const list = document.getElementById("apptList");
   list.innerHTML = `<p class="empty-note">Searching…</p>`;
 
   try {
     const appts = await apiGet(`/appointments/lookup?phone=${encodeURIComponent(phone)}&shopId=${encodeURIComponent(selectedShopId)}`);
     if (appts.length === 0) {
-      list.innerHTML = `<p class="empty-note">Is number se koi appointment nahi mila.</p>`;
+      list.innerHTML = `<p class="empty-note">No appointment was found for this phone number.</p>`;
       return;
     }
     renderAppointmentList(appts, phone);
   } catch (err) {
-    list.innerHTML = `<p class="empty-note">Kuch galat ho gaya. Dobara try karein.</p>`;
+    list.innerHTML = `<p class="empty-note">Something went wrong. Please try again.</p>`;
     console.error(err);
   }
 });
@@ -470,10 +470,10 @@ function renderAppointmentList(appts, phone) {
 
   list.querySelectorAll("[data-cancel]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      if (!confirm("Kya aap ye appointment cancel karna chahte hain?")) return;
+      if (!confirm("Do you want to cancel this appointment?")) return;
       try {
         await apiPut(`/appointments/${btn.dataset.cancel}/cancel`, { phone, shopId: selectedShopId });
-        showToast("Appointment cancel ho gaya", "success");
+        showToast("Appointment cancelled", "success");
         const appts = await apiGet(`/appointments/lookup?phone=${encodeURIComponent(phone)}&shopId=${encodeURIComponent(selectedShopId)}`);
         renderAppointmentList(appts, phone);
       } catch (err) {

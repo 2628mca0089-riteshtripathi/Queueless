@@ -31,6 +31,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
+  object-fit: cover;
   background: conic-gradient(
     from 200deg,
     var(--gold),
